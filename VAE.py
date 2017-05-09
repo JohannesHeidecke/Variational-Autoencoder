@@ -116,7 +116,7 @@ class VAE:
             log_sigma_decoder = T.dot(h_decoder, self.params['W_hxsigma']) + self.params['b_hxsigma']
 
             logpxz = (-(0.5 * np.log(2 * np.pi) + 0.5 * log_sigma_decoder) -
-                      0.5 * ((x - reconstructed_x)**2 / T.exp(log_sigma_decoder))).sum(axis=0) / self.L
+                      0.5 * ((x - reconstructed_x)**2 / T.exp(log_sigma_decoder))).sum(axis=2).sum(axis=0) / self.L
         else:
             reconstructed_x = T.nnet.sigmoid(T.dot(h_decoder, self.params['W_hx']) + self.params['b_hx'].dimshuffle('x', 0))
             logpxz = - T.nnet.binary_crossentropy(reconstructed_x, x).sum(axis=2).sum(axis=0) / self.L
