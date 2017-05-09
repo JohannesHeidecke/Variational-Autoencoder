@@ -15,7 +15,7 @@ def relu(x):
 
 class VAE:
     """This class implements the Variational Auto Encoder"""
-    def __init__(self, continuous, hu_encoder, hu_decoder, n_latent, x_train, b1=0.95, b2=0.999, batch_size=100, learning_rate=0.001, lam=0):
+    def __init__(self, continuous, hu_encoder, hu_decoder, n_latent, x_train, b1=0.95, b2=0.999, batch_size=100, learning_rate=0.001, lam=0, L=1):
         self.continuous = continuous
         self.hu_encoder = hu_encoder
         self.hu_decoder = hu_decoder
@@ -28,6 +28,9 @@ class VAE:
         self.b2 = b2
         self.learning_rate = learning_rate
         self.lam = lam
+
+        # number of samples z^(i,l) per datapoint:
+        self.L = L
 
         self.batch_size = batch_size
 
@@ -98,7 +101,8 @@ class VAE:
         else:
             srng = T.shared_randomstreams.RandomStreams(seed=seed)
 
-        eps = srng.normal(mu.shape)
+        sampleShape = (self.L,) + (self.batch_size, self.n_latent)
+        eps = srng.normal(sampleShape)
 
         # Reparametrize
         z = mu + T.exp(0.5 * log_sigma) * eps
@@ -116,7 +120,7 @@ class VAE:
                       0.5 * ((x - reconstructed_x)**2 / T.exp(log_sigma_decoder))).sum(axis=1)
         else:
             reconstructed_x = T.nnet.sigmoid(T.dot(h_decoder, self.params['W_hx']) + self.params['b_hx'].dimshuffle('x', 0))
-            logpxz = - T.nnet.binary_crossentropy(reconstructed_x, x).sum(axis=1)
+            logpxz = - T.nnet.binary_crossentropy(reconstructed_x, x).sum(axis=2).sum(axis=0) / self.L
 
         return reconstructed_x, logpxz
 
