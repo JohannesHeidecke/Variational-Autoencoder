@@ -101,6 +101,7 @@ class VAE:
         else:
             srng = T.shared_randomstreams.RandomStreams(seed=seed)
 
+        eps = srng.normal((self.L, mu.shape[0], self.n_latent))
 
         # Reparametrize
         z = mu + T.exp(0.5 * log_sigma) * eps
